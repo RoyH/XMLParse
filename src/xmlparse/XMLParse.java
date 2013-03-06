@@ -22,13 +22,15 @@ public class XMLParse extends JFrame {
             throws ParserConfigurationException, SAXException,
             IOException, XPathExpressionException, Exception {
 
+        UI.label.setText("Downloading XML FILE");
+        UI.frm.add(UI.label);
         UI.current.setSize(50, 50);
         UI.current.setValue(43);
         UI.current.setStringPainted(true);
         UI.frm.add(UI.current);
         UI.frm.setVisible(true);
         UI.frm.setLayout(new FlowLayout());
-        UI.frm.setSize(400, 200);
+        UI.frm.setSize(400, 70);
         UI.frm.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
 
@@ -38,11 +40,14 @@ public class XMLParse extends JFrame {
         parseXML();
 
         for (int i = 0; i < Global.file_list.size(); i++) {
+            
             File f = new File(extractFileName((String) Global.file_list.get(i)));
             if (f.exists()) {
                  System.out.println(extractFileName((String) Global.file_list.get(i)) + " exists already, skipping file");
             } else {
-                downloader((String) Global.file_list.get(i), extractFileName((String) Global.file_list.get(i)));
+                
+               UI.label.setText("Downloading " + extractFileName((String) Global.file_list.get(i)));; 
+               downloader((String) Global.file_list.get(i), extractFileName((String) Global.file_list.get(i)));
             }
         }
         UI.frm.dispose();
