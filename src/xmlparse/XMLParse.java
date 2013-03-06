@@ -14,6 +14,7 @@ import javax.xml.parsers.*;
 import javax.xml.xpath.*;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
+import java.util.ArrayList;
 
 public class XMLParse extends JFrame {
 
@@ -21,10 +22,57 @@ public class XMLParse extends JFrame {
             throws ParserConfigurationException, SAXException,
             IOException, XPathExpressionException, Exception {
 
+        UI.current.setSize(50, 50);
+        UI.current.setValue(43);
+        UI.current.setStringPainted(true);
+        UI.frm.add(UI.current);
+        UI.frm.setVisible(true);
+        UI.frm.setLayout(new FlowLayout());
+        UI.frm.setSize(400, 200);
+        UI.frm.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+
+
         // DOWNLOAD the LATEST XML FILE 
-        download();
-        
-        // PARSE + OUTPUT
+        downloader(Global.XMLLink, extractFileName(Global.XMLLink));
+        //Parses file 
+        parseXML();
+
+        for (int i = 0; i < Global.file_list.size(); i++) {
+            File f = new File(extractFileName((String) Global.file_list.get(i)));
+            if (f.exists()) {
+                 System.out.println(extractFileName((String) Global.file_list.get(i)) + " exists already, skipping file");
+            } else {
+                downloader((String) Global.file_list.get(i), extractFileName((String) Global.file_list.get(i)));
+            }
+        }
+        UI.frm.dispose();
+
+    }
+
+    public static String extractFileName(String path) {
+
+        if (path == null) {
+            return null;
+        }
+        String newpath = path.replace('\\', '/');
+        int start = newpath.lastIndexOf("/");
+        if (start == -1) {
+            start = 0;
+        } else {
+            start = start + 1;
+        }
+        String pageName = newpath.substring(start, newpath.length());
+
+        return pageName;
+    }
+
+    //<editor-fold defaultstate="collapsed" desc="PARSEXML">
+    public static void parseXML()
+            throws ParserConfigurationException, SAXException,
+            IOException, XPathExpressionException, Exception {
+
+
+
 
         DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
         domFactory.setNamespaceAware(true); // important line
@@ -37,7 +85,7 @@ public class XMLParse extends JFrame {
         // seems to work...
 
 
-        XPathExpression expr = xpath.compile("//item/enclosure/@url"); // XPATH QUERY. 
+        XPathExpression expr = xpath.compile("//item/enclosure/@url"); // XPATH QUERY.
 
 
 
@@ -58,25 +106,26 @@ public class XMLParse extends JFrame {
             // Also could be written as follows on one line
             // Printwriter out = new PrintWriter(new FileWriter(args[0]));
             // Write text to file
+
             //out.println("This is line 1");
+
+
             for (int i = 0; i < nodes.getLength(); i++) {
                 out.println(nodes.item(i).getNodeValue());
+                Global.file_list.add(nodes.item(i).getNodeValue());
                 // OUTPUT urls.
             }
+
+
+
 
 
             out.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
-        downloader();
-
-        //getMP3();
-
-
     }
+    //</editor-fold>
 
     public static void download() {
         try {
@@ -122,34 +171,10 @@ public class XMLParse extends JFrame {
 
     }
 
-    public static void getMP3() throws IOException {
-        URLConnection conn = new URL("http://podcasts.nytimes.com/podcasts/2013/03/01/books/review/03books_pod/030113bookreview.mp3").openConnection();
-        InputStream is = conn.getInputStream();
+    public static void downloader(String site, String filename) throws Exception {
+        //site = "http://podcasts.nytimes.com/podcasts/2013/03/01/books/review/03books_pod/030113bookreview.mp3";
+        //filename = "temp.mp3";
 
-        OutputStream outstream = new FileOutputStream(new File("file.mp3"));
-        byte[] buffer = new byte[4096];
-        int len;
-        while ((len = is.read(buffer)) > 0) {
-            outstream.write(buffer, 0, len);
-        }
-        outstream.close();
-
-    }
-
-    public static void downloader() throws Exception {
-        String site = "http://podcasts.nytimes.com/podcasts/2013/03/01/books/review/03books_pod/030113bookreview.mp3";
-        String filename = "temp.mp3";
-        //JFRAME 
-        JFrame frm = new JFrame();
-        JProgressBar current = new JProgressBar(0, 100);
-        current.setSize(50, 50);
-        current.setValue(43);
-        current.setStringPainted(true);
-        frm.add(current);
-        frm.setVisible(true);
-        frm.setLayout(new FlowLayout());
-        frm.setSize(400, 200);
-        frm.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         try {
             URL url = new URL(site);
             HttpURLConnection connection =
@@ -165,11 +190,11 @@ public class XMLParse extends JFrame {
                 totalDataRead = totalDataRead + i;
                 bout.write(data, 0, i);
                 float Percent = (totalDataRead * 100) / filesize;
-                current.setValue((int) Percent);
+                UI.current.setValue((int) Percent);
             }
             bout.close();
             in.close();
-            frm.dispose();
+
         } catch (Exception e) {
             javax.swing.JOptionPane.showConfirmDialog((java.awt.Component) null, e.getMessage(), "Error",
                     javax.swing.JOptionPane.DEFAULT_OPTION);
