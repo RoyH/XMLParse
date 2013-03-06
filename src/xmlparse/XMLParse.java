@@ -5,22 +5,24 @@
 package xmlparse;
 
 // Roy's XML Parser. :)
-import java.io.IOException;
+import java.awt.FlowLayout;
+import java.io.*;
+import java.net.*;
+import javax.swing.JFrame;
+import javax.swing.JProgressBar;
 import javax.xml.parsers.*;
 import javax.xml.xpath.*;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
-import java.net.*;
-import java.io.*;
 
-public class XMLParse {
+public class XMLParse extends JFrame {
 
     public static void main(String[] args)
             throws ParserConfigurationException, SAXException,
-            IOException, XPathExpressionException {
+            IOException, XPathExpressionException, Exception {
 
 
-        download();
+        downloader();
 
 
         DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
@@ -44,12 +46,12 @@ public class XMLParse {
         System.out.println("Parsed XML file sucessfully.. Displaying Results");
 
         //for (int i = 0; i < nodes.getLength(); i++) {
-          //  System.out.println(nodes.item(i).getNodeValue());
-            // OUTPUT urls.
-       // }
+        //  System.out.println(nodes.item(i).getNodeValue());
+        // OUTPUT urls.
+        // }
 
         try {
-           // FileWriter outFile = new FileWriter(args[0]);
+            // FileWriter outFile = new FileWriter(args[0]);
             PrintWriter out = new PrintWriter("output.txt");
 
             // Also could be written as follows on one line
@@ -70,7 +72,7 @@ public class XMLParse {
 
 
 
-
+        getMP3();
 
 
     }
@@ -117,5 +119,58 @@ public class XMLParse {
             e.printStackTrace();
         }
 
+    }
+
+    public static void getMP3() throws IOException {
+        URLConnection conn = new URL("http://podcasts.nytimes.com/podcasts/2013/03/01/books/review/03books_pod/030113bookreview.mp3").openConnection();
+        InputStream is = conn.getInputStream();
+
+        OutputStream outstream = new FileOutputStream(new File("file.mp3"));
+        byte[] buffer = new byte[4096];
+        int len;
+        while ((len = is.read(buffer)) > 0) {
+            outstream.write(buffer, 0, len);
+        }
+        outstream.close();
+
+    }
+
+    public static void downloader() throws Exception {
+        String site = "http://podcasts.nytimes.com/podcasts/2013/03/01/books/review/03books_pod/030113bookreview.mp3";
+        String filename = "temp.mp3";
+        JFrame frm = new JFrame();
+        JProgressBar current = new JProgressBar(0, 100);
+        current.setSize(50, 50);
+        current.setValue(43);
+        current.setStringPainted(true);
+        frm.add(current);
+        frm.setVisible(true);
+        frm.setLayout(new FlowLayout());
+        frm.setSize(400, 200);
+        frm.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        try {
+            URL url = new URL(site);
+            HttpURLConnection connection =
+                    (HttpURLConnection) url.openConnection();
+            int filesize = connection.getContentLength();
+            float totalDataRead = 0;
+            java.io.BufferedInputStream in = new java.io.BufferedInputStream(connection.getInputStream());
+            java.io.FileOutputStream fos = new java.io.FileOutputStream(filename);
+            java.io.BufferedOutputStream bout = new BufferedOutputStream(fos, 1024);
+            byte[] data = new byte[1024];
+            int i = 0;
+            while ((i = in.read(data, 0, 1024)) >= 0) {
+                totalDataRead = totalDataRead + i;
+                bout.write(data, 0, i);
+                float Percent = (totalDataRead * 100) / filesize;
+                current.setValue((int) Percent);
+            }
+            bout.close();
+            in.close();
+            frm.dispose();
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showConfirmDialog((java.awt.Component) null, e.getMessage(), "Error",
+                    javax.swing.JOptionPane.DEFAULT_OPTION);
+        }
     }
 }
