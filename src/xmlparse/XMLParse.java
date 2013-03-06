@@ -21,9 +21,10 @@ public class XMLParse extends JFrame {
             throws ParserConfigurationException, SAXException,
             IOException, XPathExpressionException, Exception {
 
-
-        downloader();
-
+        // DOWNLOAD the LATEST XML FILE 
+        download();
+        
+        // PARSE + OUTPUT
 
         DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
         domFactory.setNamespaceAware(true); // important line
@@ -70,9 +71,9 @@ public class XMLParse extends JFrame {
         }
 
 
+        downloader();
 
-
-        getMP3();
+        //getMP3();
 
 
     }
@@ -138,6 +139,7 @@ public class XMLParse extends JFrame {
     public static void downloader() throws Exception {
         String site = "http://podcasts.nytimes.com/podcasts/2013/03/01/books/review/03books_pod/030113bookreview.mp3";
         String filename = "temp.mp3";
+        //JFRAME 
         JFrame frm = new JFrame();
         JProgressBar current = new JProgressBar(0, 100);
         current.setSize(50, 50);
