@@ -5,6 +5,11 @@
 package xmlparse;
 
 // Roy's XML Parser. :)
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.awt.FlowLayout;
 import java.io.*;
 import java.net.*;
@@ -21,6 +26,8 @@ public class XMLParse extends JFrame {
     public static void main(String[] args)
             throws ParserConfigurationException, SAXException,
             IOException, XPathExpressionException, Exception {
+        
+        readLines();
 
         UI.label.setText("Downloading XML FILE");
         UI.frm.add(UI.label);
@@ -35,23 +42,39 @@ public class XMLParse extends JFrame {
 
 
         // DOWNLOAD the LATEST XML FILE 
-        downloader(Global.XMLLink, extractFileName(Global.XMLLink));
+        downloader(Global.XMLLink, extractFileName(Global.XMLLink), "");
         //Parses file 
         parseXML();
-
+        
         for (int i = 0; i < Global.file_list.size(); i++) {
-            
-            File f = new File(extractFileName((String) Global.file_list.get(i)));
+
+            File f = new File(Global.save + extractFileName(((String) Global.file_list.get(i))));
             if (f.exists()) {
-                 System.out.println(extractFileName((String) Global.file_list.get(i)) + " exists already, skipping file");
+                System.out.println(extractFileName((String) Global.file_list.get(i)) + " exists already, skipping file");
             } else {
-                
-               UI.label.setText("Downloading " + extractFileName((String) Global.file_list.get(i)));; 
-               downloader((String) Global.file_list.get(i), extractFileName((String) Global.file_list.get(i)));
+
+                UI.label.setText("Downloading " + extractFileName((String) Global.file_list.get(i)));;
+                downloader((String) Global.file_list.get(i), extractFileName((String) Global.file_list.get(i)), Global.save);
             }
         }
         UI.frm.dispose();
 
+    }
+
+    public static void readLines() throws IOException {
+        FileReader fileReader;
+        fileReader = new FileReader("config.txt");
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        String line = null;
+        while ((line = bufferedReader.readLine()) != null) {
+            Global.config.add(line);
+        }
+        bufferedReader.close();
+        Global.XMLLink = Global.config.get(0);
+        Global.save = Global.config.get(1);
+        
+        
+        
     }
 
     public static String extractFileName(String path) {
@@ -176,7 +199,7 @@ public class XMLParse extends JFrame {
 
     }
 
-    public static void downloader(String site, String filename) throws Exception {
+    public static void downloader(String site, String filename, String directory) throws Exception {
         //site = "http://podcasts.nytimes.com/podcasts/2013/03/01/books/review/03books_pod/030113bookreview.mp3";
         //filename = "temp.mp3";
 
@@ -187,7 +210,7 @@ public class XMLParse extends JFrame {
             int filesize = connection.getContentLength();
             float totalDataRead = 0;
             java.io.BufferedInputStream in = new java.io.BufferedInputStream(connection.getInputStream());
-            java.io.FileOutputStream fos = new java.io.FileOutputStream(filename);
+            java.io.FileOutputStream fos = new java.io.FileOutputStream(directory + filename);
             java.io.BufferedOutputStream bout = new BufferedOutputStream(fos, 1024);
             byte[] data = new byte[1024];
             int i = 0;
