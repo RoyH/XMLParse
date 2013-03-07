@@ -26,8 +26,13 @@ public class XMLParse extends JFrame {
     public static void main(String[] args)
             throws ParserConfigurationException, SAXException,
             IOException, XPathExpressionException, Exception {
+        try {
+           readLines(); 
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showConfirmDialog((java.awt.Component) null, e.getMessage(), "Error",
+                    javax.swing.JOptionPane.DEFAULT_OPTION);
+        }
         
-        readLines();
 
         UI.label.setText("Downloading XML FILE");
         UI.frm.add(UI.label);
