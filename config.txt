@@ -1,0 +1,2 @@
+http://www.nytimes.com/services/xml/rss/nyt/podcasts/bookupdate.xml
+audio/
