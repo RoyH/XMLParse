@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+// Version 3.0
 package xmlparse;
 
 // Roy's XML Parser. :)
@@ -14,6 +11,7 @@ import java.io.IOException;
 import java.awt.FlowLayout;
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.xml.parsers.*;
 import javax.xml.xpath.*;
@@ -21,22 +19,21 @@ import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
 public class XMLParse extends JFrame {
-    
+
     public static void main(String[] args)
             throws ParserConfigurationException, SAXException,
             IOException, XPathExpressionException, Exception {
+
+        SourceCollection Collection = new SourceCollection();
+        ArrayList<AudioSource> Sources = new ArrayList();
+        Collection = ReadStreams();
+
+        //<editor-fold defaultstate="collapsed" desc="UI INITIALIZATION">
+        // Initiallizing UI Ignore..
         
-        
-        
-        try {
-            readLines();
-        } catch (Exception e) {
-            javax.swing.JOptionPane.showConfirmDialog((java.awt.Component) null, e.getMessage(), "Error",
-                    javax.swing.JOptionPane.DEFAULT_OPTION);
-        }        
-        
-       
-        
+
+        //--------
+
         UI.label.setText("Downloading XML FILE");
         UI.frm.add(UI.label);
         UI.current.setSize(50, 50);
@@ -48,29 +45,46 @@ public class XMLParse extends JFrame {
         UI.frm.setSize(400, 70);
         UI.frm.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
+        //</editor-fold>
 
+
+        //last working code
         // DOWNLOAD the LATEST XML FILE 
-        downloader(Global.XMLLink, extractFileName(Global.XMLLink), "");
+        //downloader(Global.XMLLink, extractFileName(Global.XMLLink), "");
         //Parses file 
-        parseXML();
-        
-        for (int i = 0; i < Global.file_list.size(); i++) {
+        //parseXML();
+
+        //convert AudioSource object to arraylist.
+        Sources = Collection.getList();
+
+        // Loops through..
+        for (AudioSource s : Sources) {
+            // Get XML FILE
+            downloader(s.xml(), extractFileName(s.xml()), "");
+            //Now extract the URLS from it using XMLPARSE
+            s.setURL(parseXML(extractFileName(s.xml())));
+            //now remove the xml file to stop conflicts..
+            Delete(extractFileName(s.xml()));
+            // now we can iterate through the download Process.
+            s.Download();
+            //Now tag Files
+            ListFiles(s.SavePath(),s.AlbumTag());
             
-            File f = new File(Global.save + extractFileName(((String) Global.file_list.get(i))));
-            if (f.exists()) {
-                System.out.println(extractFileName((String) Global.file_list.get(i)) + " exists already, skipping file");
-            } else {
-                
-                UI.label.setText("Downloading " + extractFileName((String) Global.file_list.get(i)));;
-                downloader((String) Global.file_list.get(i), extractFileName((String) Global.file_list.get(i)), Global.save);
-            }
+            
+            
+
+
         }
-        UI.label.setText("TAGGING FILES...");
-        ListFiles();
-        UI.frm.dispose();
+
+
+
         
+        UI.label.setText("TAGGING FILES...");
+        
+        UI.frm.dispose();
+
     }
-    
+/* old code.
     public static void readLines() throws IOException {
         FileReader fileReader;
         fileReader = new FileReader("config.txt");
@@ -82,13 +96,14 @@ public class XMLParse extends JFrame {
         bufferedReader.close();
         Global.XMLLink = Global.config.get(0);
         Global.save = Global.config.get(1);
-        
-        
-        
+
+
+
     }
-    
+    */
+
     public static String extractFileName(String path) {
-        
+
         if (path == null) {
             return null;
         }
@@ -100,42 +115,45 @@ public class XMLParse extends JFrame {
             start = start + 1;
         }
         String pageName = newpath.substring(start, newpath.length());
-        
+
         return pageName;
     }
 
     //<editor-fold defaultstate="collapsed" desc="PARSEXML">
-    public static void parseXML()
+    public static ArrayList<String> parseXML(String path)
             throws ParserConfigurationException, SAXException,
             IOException, XPathExpressionException, Exception {
-        
-        
-        
-        
+
+
+
+
         DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
         domFactory.setNamespaceAware(true); // important line
         DocumentBuilder builder = domFactory.newDocumentBuilder();
-        Document doc = builder.parse("bookupdate.xml");
-        
+        Document doc = builder.parse(path);
+
         XPathFactory factory = XPathFactory.newInstance();
         XPath xpath = factory.newXPath();
         // experimental XPATH query that will extract URL's
         // seems to work...
 
-        
+
         XPathExpression expr = xpath.compile("//item/enclosure/@url"); // XPATH QUERY.
 
-        
-        
+
+
         Object result = expr.evaluate(doc, XPathConstants.NODESET);
         NodeList nodes = (NodeList) result;
-        
+
         System.out.println("Parsed XML file sucessfully.. Displaying Results");
 
         //for (int i = 0; i < nodes.getLength(); i++) {
         //  System.out.println(nodes.item(i).getNodeValue());
         // OUTPUT urls.
         // }
+
+        //initiallize output arraylist
+        ArrayList<String> output = new ArrayList();
 
         try {
             // FileWriter outFile = new FileWriter(args[0]);
@@ -147,68 +165,28 @@ public class XMLParse extends JFrame {
 
             //out.println("This is line 1");
 
-            
+
             for (int i = 0; i < nodes.getLength(); i++) {
+                //saves it to output.txt for debugging
                 out.println(nodes.item(i).getNodeValue());
-                Global.file_list.add(nodes.item(i).getNodeValue());
+                //saves to arraylist
+                output.add(nodes.item(i).getNodeValue());
                 // OUTPUT urls.
             }
-            
-            
-            
-            
-            
+
+
+
+
+
             out.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        return output;
     }
     //</editor-fold>
 
-    public static void download() {
-        try {
-            /*
-             * Get a connection to the URL and start up
-             * a buffered reader.
-             */
-            long startTime = System.currentTimeMillis();
-            
-            System.out.println("Connecting to NYT servers \n");
-            
-            URL url = new URL("http://www.nytimes.com/services/xml/rss/nyt/podcasts/bookupdate.xml");
-            url.openConnection();
-            InputStream reader = url.openStream();
-
-            /*
-             * Setup a buffered file writer to write
-             * out what we read from the website.
-             */
-            FileOutputStream writer = new FileOutputStream("bookupdate.xml");
-            byte[] buffer = new byte[153600];
-            int totalBytesRead = 0;
-            int bytesRead = 0;
-            
-            System.out.println("Reading XML file 150KB blocks at a time.\n");
-            
-            while ((bytesRead = reader.read(buffer)) > 0) {
-                writer.write(buffer, 0, bytesRead);
-                buffer = new byte[153600];
-                totalBytesRead += bytesRead;
-            }
-            
-            long endTime = System.currentTimeMillis();
-            
-            System.out.println("Done. " + (new Integer(totalBytesRead).toString()) + " bytes read (" + (new Long(endTime - startTime).toString()) + " millseconds).\n");
-            writer.close();
-            reader.close();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        
-    }
-    
     public static void downloader(String site, String filename, String directory) throws Exception {
         //site = "http://podcasts.nytimes.com/podcasts/2013/03/01/books/review/03books_pod/030113bookreview.mp3";
         //filename = "temp.mp3";
@@ -232,40 +210,82 @@ public class XMLParse extends JFrame {
             }
             bout.close();
             in.close();
-            
+
         } catch (Exception e) {
             javax.swing.JOptionPane.showConfirmDialog((java.awt.Component) null, e.getMessage(), "Error",
                     javax.swing.JOptionPane.DEFAULT_OPTION);
         }
     }
-    
-    public static void ListFiles() throws Exception {
+
+    public static void ListFiles(String Path, String Tag) throws Exception {
 
         // Directory path here
-        String path = Global.save;
-        
+        String path = Path;
+
         String files;
         File folder = new File(path);
         File[] listOfFiles = folder.listFiles();
-        
+
         for (int i = 0; i < listOfFiles.length; i++) {
-            
+
             if (listOfFiles[i].isFile()) {
                 files = listOfFiles[i].getName();
                 if (files.endsWith(".mp3") || files.endsWith(".MP3")) {
                     //System.out.println(files);
-                    ID3WRITE(listOfFiles[i]);
+                    ID3WRITE(listOfFiles[i], Tag);
                 }
             }
         }
     }
-    
-    public static void ID3WRITE(File file) throws Exception {
+
+    public static void ID3WRITE(File file, String Tag) throws Exception {
         AudioFile f = AudioFileIO.read(file);
         Tag tag = f.getTagOrCreateAndSetDefault();
-        tag.setField(FieldKey.ALBUM, "NYT Books");
+        tag.setField(FieldKey.ALBUM, Tag);
         AudioFileIO.write(f);
         System.out.println("Sucessfully Tagged " + file.getName());
-        
+
+    }
+
+    public static SourceCollection ReadStreams() throws FileNotFoundException, IOException {
+        SourceCollection Collection = new SourceCollection();
+
+        ArrayList<String> Streams = new ArrayList();
+        BufferedReader br = new BufferedReader(new FileReader("streams.txt"));
+        String line;
+        while ((line = br.readLine()) != null) {
+            // now breakdown the line and parse into objects. 
+            // format. name,xml,albumtag,savepath
+            String[] sort = new String[4];
+            sort = line.split(",");
+
+            AudioSource temp = new AudioSource(sort[0], sort[1], sort[2], sort[3]);
+            Collection.addStream(temp);
+
+        }
+        br.close();
+        Collection.output();
+        return Collection;
+
+
+    }
+
+    public static void Delete(String path) {
+        try {
+
+            File file = new File(path);
+
+            if (file.delete()) {
+                System.out.println(file.getName() + " is deleted!");
+            } else {
+                System.out.println("Delete operation is failed.");
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+        }
+
     }
 }
