@@ -1,0 +1,2 @@
+NYTBOOKS,http://www.nytimes.com/services/xml/rss/nyt/podcasts/bookupdate.xml,NYT Books,audio/
+FSN News,http://fsrn.org/taxonomy/term/5/0/feed,FSN News,FSN NEWS/
